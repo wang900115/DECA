@@ -1,6 +1,6 @@
-APP_NAME := DESA
+APP_NAME := DECA
 BUILD_DIR := build
-SRC := ./cmd/DESA/main.go
+SRC := ./cmd/DECA/main.go
 Go := go
 
 .PHONY: lint fmt
