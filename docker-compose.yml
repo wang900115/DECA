@@ -1,0 +1,129 @@
+version: "3.9"
+services:
+  app:
+    build: .
+    container_name: deca_app
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/app
+      - ./log:/app/log
+    env_file:
+      - .env
+    environment:
+      - CONFIG_PATH=/app/config/app.yaml
+    depends_on:
+      - postgres_write
+      - redis_write
+
+  postgres_write:
+    image: postgres:15
+    container_name: postgres_write
+    environment:
+      POSTGRES_DB: main
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+
+  postgres_read_1:
+    image: postgres:15
+    container_name: postgres_read_1
+    environment:
+      POSTGRES_DB: main
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+
+  postgres_read_2:
+    image: postgres:15
+    container_name: postgres_read_2
+    environment:
+      POSTGRES_DB: main
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5434:5432"
+
+  redis_write:
+    image: redis:7
+    container_name: redis_write
+    ports:
+      - "6379:6379"
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis_read_1:
+    image: redis:7
+    container_name: redis_read_1
+    ports:
+      - "6380:6379"
+
+  redis_read_2:
+    image: redis:7
+    container_name: redis_read_2
+    ports:
+      - "6381:6379"
+
+  redis_sentinel_1:
+    image: bitnami/redis-sentinel:7.0
+    container_name: redis_sentinel_1
+    environment:
+      - REDIS_MODE=sentinel
+      - REDIS_SENTINEL_QUORUM=2
+      - REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS=5000
+      - REDIS_SENTINEL_HEARTBEAT_INTERVAL=2000
+      - REDIS_SENTINEL_FAILOVER_TIMEOUT=10000
+      - REDIS_MASTER_HOST=redis_write
+      - REDIS_MASTER_PORT_NUMBER=6379
+      - REDIS_SENTINEL_ANNOUNCE_IP=redis_sentinel_1
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - "26379:26379"
+    depends_on:
+      redis_write:
+        condition: service_healthy
+
+  redis_sentinel_2:
+    image: bitnami/redis-sentinel:7.0
+    container_name: redis_sentinel_2
+    environment:
+      - REDIS_MODE=sentinel
+      - REDIS_SENTINEL_QUORUM=2
+      - REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS=5000
+      - REDIS_SENTINEL_HEARTBEAT_INTERVAL=2000
+      - REDIS_SENTINEL_FAILOVER_TIMEOUT=10000
+      - REDIS_MASTER_HOST=redis_write
+      - REDIS_MASTER_PORT_NUMBER=6379
+      - REDIS_SENTINEL_ANNOUNCE_IP=redis_sentinel_2
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - "26380:26379"
+    depends_on:
+      redis_write:
+        condition: service_healthy
+
+  redis_sentinel_3:
+    image: bitnami/redis-sentinel:7.0
+    container_name: redis_sentinel_3
+    environment:
+      - REDIS_MODE=sentinel
+      - REDIS_SENTINEL_QUORUM=2
+      - REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS=5000
+      - REDIS_SENTINEL_HEARTBEAT_INTERVAL=2000
+      - REDIS_SENTINEL_FAILOVER_TIMEOUT=10000
+      - REDIS_MASTER_HOST=redis_write
+      - REDIS_MASTER_PORT_NUMBER=6379
+      - REDIS_SENTINEL_ANNOUNCE_IP=redis_sentinel_3
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - "26381:26379"
+    depends_on:
+      redis_write:
+        condition: service_healthy
+      

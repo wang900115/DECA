@@ -1,0 +1,46 @@
+name: LCA CI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 檢出程式碼
+      uses: actions/checkout@v4
+
+    - name: 設定 Go 環境
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24.4'
+
+    - name: 安裝依賴套件
+      run: go mod download
+
+    - name: 編譯
+      run: go build ./...
+
+    - name: 執行測試
+      run: go test ./...
+
+    - name: 執行靜態分析
+      run: go vet ./...
+
+    - name: DC提示 (成功)
+      if: success()
+      run: |
+        curl -H "Content-Type: application/json" \
+          -X POST \
+          -d "{\"content\": \"✅ CI Pipeline Passed\nRepo: $GITHUB_REPOSITORY\nCommit: $GITHUB_SHA\nAuthor: $GITHUB_ACTOR\"}" \
+          ${{ secrets.DISCORD_WEBHOOK }}
+
+    - name: DC提示 (失敗)
+      if: failure()
+      run: |
+        curl -H "Content-Type: application/json" \
+          -X POST \
+          -d "{\"content\": \"❌ CI Pipeline Failed\nRepo: $GITHUB_REPOSITORY\nCommit: $GITHUB_SHA\nAuthor: $GITHUB_ACTOR\"}" \
+          ${{ secrets.DISCORD_WEBHOOK }}
