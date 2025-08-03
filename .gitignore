@@ -1,6 +1,7 @@
 build/
 test/
 lib/
+api/
 
 *.exe
 *.log
